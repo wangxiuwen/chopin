@@ -1,0 +1,14 @@
+# Ignore all files in the .idea directory
+.idea/
+
+# Ignore all files in the venv directory (Python virtual environment)
+venv/
+
+# Ignore all files in the __pycache__ directory
+__pycache__/
+
+# Ignore all files in the .vscode directory
+.vscode/
+
+models
+config.yaml

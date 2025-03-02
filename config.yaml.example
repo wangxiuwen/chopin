@@ -8,3 +8,8 @@ llm:
   model: "qwen-long"
   api_key: "<YOUR_API_KEY_HERE>"
   base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+
+tts:
+  model: "./models/vits-icefall-zh-aishell3/model.onnx"
+  lexicon: "./models/vits-icefall-zh-aishell3/lexicon.txt"
+  tokens: "./models/vits-icefall-zh-aishell3/tokens.txt"

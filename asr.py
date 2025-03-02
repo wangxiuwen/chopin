@@ -65,7 +65,7 @@ class SpeechRecognizer:
 
                     if result and (last_result != result):
                         last_result = result
-                        print("\r last result-------哈哈 {}:{}".format(segment_id, result), end="", flush=True)
+                        print("\rSpeech recognized: {}:{}".format(segment_id, result), end="", flush=True)
                     
                     if is_endpoint:
                         if result:

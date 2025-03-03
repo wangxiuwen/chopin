@@ -39,26 +39,47 @@ class TextToSpeechPlayer:
         self.tts = sherpa_onnx.OfflineTts(config)
         self.sid = 0  # 默认使用说话人ID 0
     
-    async def play_text(self, text: str) -> None:
+    def _preprocess_text(self, text: str) -> str:
         """
-        异步播放文本
-        :param text: 要转换为语音的文本
+        预处理文本，移除或替换可能导致OOV错误的特殊字符
+        :param text: 原始文本
+        :return: 处理后的文本
         """
-        if self.tts is None:
-            print("TTS未初始化，无法播放语音")
-            return
+        # 定义需要替换的特殊字符及其替换字符
+        replacements = {
+            '）': ')',  # 全角括号替换为半角
+            '（': '(',
+            '。': '.',  # 全角标点替换为半角
+            '，': ',',
+            '！': '!',
+            '？': '?',
+            '［': '[',  # 全角方括号替换为半角
+            '］': ']',
+            '【': '[',  # 全角方括号（另一种）替换为半角
+            '】': ']'
+        }
         
+        # 应用替换规则
+        for old, new in replacements.items():
+            text = text.replace(old, new)
+        
+        return text
+
+    async def play_text(self, text: str):
+        """生成并播放语音"""
         try:
-            # 在异步环境中生成语音
-            loop = asyncio.get_event_loop()
-            audio = await loop.run_in_executor(
-                None, 
-                lambda: self.tts.generate(text, sid=self.sid, speed=self.speed)
-            )
+            # 预处理文本
+            text = self._preprocess_text(text)
+            
+            # 生成语音
+            audio = self.tts.generate(text, sid=self.sid, speed=self.speed)
             
             # 获取音频数据和采样率
             samples = audio.samples
             sample_rate = audio.sample_rate
+            
+            # 获取当前事件循环
+            loop = asyncio.get_running_loop()
             
             # 将numpy数组转换为AudioSegment并播放
             audio_bytes = io.BytesIO()

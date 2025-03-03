@@ -10,7 +10,7 @@ async def main():
     # 初始化语音识别器和LLM
     recognizer = SpeechRecognizer()
     llm = LLM()
-    tts_player = TextToSpeechPlayer(speed=1.0)
+    tts_player = TextToSpeechPlayer(speed=2)
 
     # 系统提示消息
     system_message = {

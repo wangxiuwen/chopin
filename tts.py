@@ -5,78 +5,39 @@ import numpy as np
 import soundfile as sf
 from pydub import AudioSegment
 from pydub.playback import play
-from config import ConfigLoader
+from config import ConfigLoader  # 导入配置加载器
+
+cfg = ConfigLoader().config
 
 class TextToSpeechPlayer:
-    def __init__(self, voice: str = "zh-CN-YunxiNeural", rate: str = "+0%", volume: str = "+0%"):
-        """
-        初始化语音播放器
-        :param voice: 语音名称，在sherpa-onnx中不使用，保留参数以兼容现有代码
-        :param rate: 语速调整，对应sherpa-onnx中的speed参数，默认1.0
-        :param volume: 音量调整，在sherpa-onnx中不使用，保留参数以兼容现有代码
-        """
-        # 保留原始参数以兼容现有代码
-        self.voice = voice
-        self.rate = rate
-        self.volume = volume
-        
-        # 解析rate参数，将edge-tts的格式(如"+0%")转换为sherpa-onnx的speed参数(如1.0)
-        try:
-            # 去掉百分号并转换为浮点数
-            rate_value = float(self.rate.rstrip('%').replace('+', ''))
-            # 转换为sherpa-onnx的speed参数格式：+10%对应1.1，-10%对应0.9
-            self.speed = 1.0 + (rate_value / 100.0)
-        except ValueError:
-            # 如果解析失败，使用默认值1.0
-            self.speed = 1.0
-            
+    def __init__(self, speed=1.0):
         # 初始化TTS配置
+        self.speed = speed  # 保存speed参数为实例变量
         self._init_tts()
 
     def _init_tts(self):
-        """
-        初始化sherpa-onnx TTS配置
-        """
-        try:
-            # 从配置文件加载TTS模型路径
-            cfg = ConfigLoader().config
-            # 如果配置中有tts部分，则使用配置中的路径
-            if hasattr(cfg, 'tts'):
-                model_path = getattr(cfg.tts, 'vits-model', getattr(cfg.tts, 'model', None))
-                lexicon_path = getattr(cfg.tts, 'vits-lexicon', getattr(cfg.tts, 'lexicon', None))
-                tokens_path = getattr(cfg.tts, 'vits-tokens', getattr(cfg.tts, 'tokens', None))
-            else:
-                # 使用默认路径 - 根据可用模型选择
-                model_path = "./models/vits-icefall-zh-aishell3/model.onnx"
-                lexicon_path = "./models/vits-icefall-zh-aishell3/lexicon.txt"
-                tokens_path = "./models/vits-icefall-zh-aishell3/tokens.txt"
-            
-            # 创建VITS模型配置
-            vits_config = sherpa_onnx.OfflineTtsVitsModelConfig(
-                model=model_path,
-                lexicon=lexicon_path,
-                tokens=tokens_path,
-                dict_dir=getattr(cfg.tts, 'vits-dict-dir', None)
-            )
-            
-            # 创建TTS模型配置
-            model_config = sherpa_onnx.OfflineTtsModelConfig(
-                vits=vits_config,
-                num_threads=1
-            )
-            
-            # 创建TTS配置
-            config = sherpa_onnx.OfflineTtsConfig(
-                model=model_config
-            )
-            
-            # 创建TTS实例
-            self.tts = sherpa_onnx.OfflineTts(config)
-            self.sid = 0  # 默认使用说话人ID 0
-            
-        except Exception as e:
-            print(f"初始化TTS失败: {e}")
-            self.tts = None
+
+        # 创建VITS模型配置
+        vits_config = sherpa_onnx.OfflineTtsVitsModelConfig(
+            model=cfg.tts.model,
+            lexicon=cfg.tts.lexicon,
+            tokens=cfg.tts.tokens
+        )
+        
+        # 创建TTS模型配置
+        model_config = sherpa_onnx.OfflineTtsModelConfig(
+            vits=vits_config,
+            num_threads=1
+        )
+        
+        # 创建TTS配置
+        config = sherpa_onnx.OfflineTtsConfig(
+            model=model_config
+        )
+        
+        # 创建TTS实例
+        self.tts = sherpa_onnx.OfflineTts(config)
+        self.sid = 0  # 默认使用说话人ID 0
     
     async def play_text(self, text: str) -> None:
         """
@@ -127,7 +88,7 @@ if __name__ == "__main__":
         text = sys.argv[1] if len(sys.argv) > 1 else "欢迎使用sherpa-onnx语音合成服务。"
         
         # 创建播放器实例
-        tts_player = TextToSpeechPlayer()
+        tts_player = TextToSpeechPlayer()  # 提供默认的speed参数
         
         # 播放文本
         print("正在生成并播放语音...")
